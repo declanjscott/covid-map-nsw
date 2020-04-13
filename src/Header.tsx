@@ -6,6 +6,10 @@ import {
   FormGroup,
   ControlGroup,
   Button,
+  Dialog,
+  Classes,
+  AnchorButton,
+  Intent,
 } from "@blueprintjs/core";
 
 import "@blueprintjs/core/lib/css/blueprint.css";
@@ -23,6 +27,7 @@ type HeaderProps = {
 
 type HeaderState = {
   postcode: string;
+  overlayOpen: boolean;
 };
 
 enum PostcodeStatus {
@@ -34,11 +39,15 @@ enum PostcodeStatus {
 class Header extends React.Component<HeaderProps, HeaderState> {
   constructor(props: HeaderProps) {
     super(props);
-    console.log("setting header");
     this.state = {
       postcode: "",
+      overlayOpen: false,
     };
   }
+
+  toggleOverlay = () => {
+    this.setState({ overlayOpen: !this.state.overlayOpen });
+  };
 
   getRangeSlider = () => {
     return (
@@ -147,7 +156,43 @@ class Header extends React.Component<HeaderProps, HeaderState> {
             : this.getRangeSlider()}
         </div>
         <div className="header-buttons">
-          <Button icon="info-sign">About this app</Button>
+          <Button onClick={this.toggleOverlay} icon="info-sign">
+            About this app
+          </Button>
+          <Dialog
+            className={"bp3-dark"}
+            icon="info-sign"
+            onClose={this.toggleOverlay}
+            title="NSW COVID-19 Map"
+            isOpen={this.state.overlayOpen}
+          >
+            <div className={Classes.DIALOG_BODY}>
+              <p>
+                This app lets you explore the latest{" "}
+                <a
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  href="https://data.nsw.gov.au/data/dataset/covid-19-cases-by-location"
+                >
+                  NSW Health COVID-19 data
+                </a>
+                .
+              </p>
+            </div>
+            <div className={Classes.DIALOG_FOOTER}>
+              <div className={Classes.DIALOG_FOOTER_ACTIONS}>
+                <AnchorButton
+                  intent={Intent.PRIMARY}
+                  href="https://github.com/declanjscott/covid-map-nsw"
+                  target="_blank"
+                  icon="git-repo"
+                >
+                  View on GitHub
+                </AnchorButton>
+                <Button onClick={this.toggleOverlay}>Close</Button>
+              </div>
+            </div>
+          </Dialog>
           {this.props.postcode && (
             <Button
               icon="edit"
