@@ -1,0 +1,83 @@
+.App {
+  text-align: center;
+}
+body {
+  background-color: #242424;
+}
+
+.header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 24px;
+  display: flex;
+}
+.header-buttons {
+  display: flex;
+  flex-direction: column;
+  margin-left: 10px;
+  align-items: flex-start;
+}
+
+.delete-button {
+  margin-top: 10px;
+}
+
+.header-box {
+  background-color: #293742;
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px rgba(16, 22, 26, 0.2), 0 2px 4px rgba(16, 22, 26, 0.4),
+    0 8px 24px rgba(16, 22, 26, 0.4);
+  width: 100%;
+  padding: 16px 24px;
+  max-width: 700px;
+}
+
+.header-slider-content {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.header-input-content {
+  display: flex;
+  text-align: left;
+  flex-direction: column;
+}
+.mapContainer {
+  position: absolute;
+  top: 0px;
+  right: 0;
+  left: 0;
+  bottom: 0;
+}
+.main-container {
+  transition: opacity 1s linear;
+  transition-delay: 1s;
+}
+
+.loading {
+  background-color: #242424;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.form-group {
+  margin-bottom: 0 !important;
+}
+
+.bp3-form-helper-text {
+  margin-top: 16px !important;
+}
+
+.loading-container {
+  transition: opacity 1s linear;
+}
+
+.hidden {
+  opacity: 0;
+}

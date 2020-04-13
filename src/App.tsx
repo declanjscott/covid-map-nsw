@@ -1,0 +1,262 @@
+import React from "react";
+import "./App.css";
+import CaseMap from "./CaseMap";
+import Header from "./Header";
+import distance from "@turf/distance";
+import centerOfMass from "@turf/center-of-mass";
+import centroid from "@turf/centroid";
+import { point, polygon } from "@turf/helpers";
+import { decode } from "geobuf";
+import Pbf from "pbf";
+import Loading from "./Loading";
+
+type AppProps = {};
+
+type ViewPort = {
+  latitude: number;
+  longitude: number;
+  zoom: number;
+};
+
+export type PostcodeDict = Map<
+  string,
+  { centre: [number, number]; names: string[] }
+>;
+
+type AppState = {
+  mapData?: GeoJSON.FeatureCollection;
+  mapDataLoaded: boolean;
+  mapInitialised: boolean;
+  viewport: ViewPort;
+  range: number;
+  centreCoordinates?: [number, number];
+  centrePostCode?: string;
+  postcodeDict: PostcodeDict;
+  distancesDirty: boolean;
+};
+
+class App extends React.Component<AppProps, AppState> {
+  constructor(props: AppProps) {
+    super(props);
+
+    this.state = {
+      viewport: {
+        latitude: -33.89668,
+        longitude: 151.20638,
+        zoom: 12,
+      },
+      mapDataLoaded: false,
+      range: 1,
+      mapInitialised: false,
+      postcodeDict: new Map(),
+      distancesDirty: false,
+    };
+  }
+
+  componentDidMount() {
+    let url = process.env.PUBLIC_URL + "/covid_nsw.pbf";
+    fetch(url)
+      .then((response) => response.arrayBuffer())
+      .then((result) => {
+        let decoded = decode(new Pbf(result));
+
+        if (decoded.type === "FeatureCollection") {
+          this.compute_centres(decoded);
+          this.setState({ mapData: decoded, mapDataLoaded: true });
+          if (
+            this.state.centrePostCode &&
+            this.state.postcodeDict.has(this.state.centrePostCode)
+          ) {
+            const from = this.state.postcodeDict.get(this.state.centrePostCode)
+              ?.centre;
+            if (from !== undefined) {
+              this.setState({ centreCoordinates: from });
+              this.compute_distances(decoded, from);
+            }
+          }
+        }
+      });
+  }
+
+  handleRangeChange = (newRange: number) => {
+    this.setState({ range: newRange });
+  };
+
+  onMapInitialised = () => {
+    this.setState({ mapInitialised: true });
+  };
+
+  render() {
+    const loading = !(this.state.mapDataLoaded && this.state.mapInitialised);
+    return (
+      <div className="App">
+        <div
+          className={
+            loading ? "loading-container" : " loading-container hidden"
+          }
+        >
+          <Loading></Loading>
+        </div>
+        <div className={loading ? "hidden main-container" : "main-container"}>
+          <CaseMap
+            onMapInitialised={this.onMapInitialised}
+            homeLongLat={this.state.centreCoordinates}
+            mapData={this.state.mapData}
+            range={this.state.range}
+            mapDataLoaded={this.state.mapDataLoaded}
+            distancesDirty={this.state.distancesDirty}
+            updatePostcode={this.updatePostcode}
+            clearDirty={() => {
+              this.setState({ distancesDirty: false });
+            }}
+          ></CaseMap>
+          <Header
+            updatePostcode={this.updatePostcode}
+            numCases={this.countCases(this.state.range, this.state.mapData)}
+            range={this.state.range}
+            loaded={this.state.mapDataLoaded}
+            updateRange={this.handleRangeChange}
+            postcode={this.state.centrePostCode}
+            postcodeDict={this.state.postcodeDict}
+          ></Header>
+        </div>
+      </div>
+    );
+  }
+
+  updatePostcode = (newPostCode: string | undefined) => {
+    this.setState({ centrePostCode: newPostCode });
+    const new_centre =
+      newPostCode === undefined
+        ? ([-25.674502, 128.782607] as [number, number])
+        : this.state.postcodeDict.get(newPostCode)?.centre;
+    const centre_coordinates =
+      newPostCode === undefined ? undefined : new_centre;
+
+    if (
+      this.state.mapData !== undefined &&
+      new_centre !== undefined &&
+      newPostCode !== undefined
+    ) {
+      this.compute_distances(this.state.mapData, new_centre, newPostCode);
+    }
+    this.setState({ centreCoordinates: centre_coordinates });
+  };
+
+  countCases(range: number, mapData?: GeoJSON.FeatureCollection): number {
+    if (mapData === undefined) {
+      return -1;
+    }
+    let count = 0;
+    mapData.features.forEach((feature) => {
+      if (feature.properties != null) {
+        const distance = feature.properties.min_distance;
+        if (distance <= range) {
+          count += feature.properties.cases;
+        }
+      }
+    });
+    return count;
+  }
+
+  compute_centres = (mapData: GeoJSON.FeatureCollection) => {
+    mapData.features.forEach((feature) => {
+      if (feature.properties !== null) {
+        feature.properties.min_distance = 2000;
+        const names: string[] = feature.properties.names;
+        const num_suburbs_to_show = 4;
+        if (names.length <= num_suburbs_to_show) {
+          feature.properties.names_string = names.join(", ");
+        } else {
+          const remainder = names.length - num_suburbs_to_show;
+          const names_string = `${names
+            .slice(undefined, num_suburbs_to_show)
+            .join(", ")} and ${names.length - num_suburbs_to_show} more suburb${
+            remainder > 1 ? "s" : ""
+          }`;
+          feature.properties.names_string = names_string;
+        }
+      }
+
+      if (feature.geometry.type === "Polygon" && feature.properties !== null) {
+        const centre = centerOfMass(polygon(feature.geometry.coordinates))
+          .geometry.coordinates;
+        feature.properties.centre_lng = centre[0];
+        feature.properties.centre_lat = centre[1];
+      } else if (
+        feature.geometry.type === "MultiPolygon" &&
+        feature.properties !== null
+      ) {
+        if (feature.properties !== null) {
+          const centre = centroid(feature.geometry).geometry.coordinates;
+          feature.properties.centre_lng = centre[0];
+          feature.properties.centre_lat = centre[1];
+        }
+      } else {
+        console.error("unknown shape");
+      }
+      if (feature.properties !== null) {
+        const postcode = feature.properties.code;
+        const centre: [number, number] = [
+          feature.properties.centre_lng,
+          feature.properties.centre_lat,
+        ];
+        const names = feature.properties.names;
+        this.state.postcodeDict.set(postcode, {
+          centre,
+          names,
+        });
+      }
+    });
+  };
+
+  compute_distances = (
+    mapData: GeoJSON.FeatureCollection,
+    fromCoords: [number, number],
+    centrePostcode?: string
+  ) => {
+    const from = point(fromCoords);
+    mapData.features.forEach((feature) => {
+      if (feature.geometry.type === "Polygon" && feature.properties !== null) {
+        const points = feature.geometry.coordinates[0];
+        let min_distance = Number.MAX_VALUE;
+        points.forEach((position) => {
+          const to = point([position[0], position[1]]);
+          const distance_between = distance(from, to);
+          if (distance_between < min_distance) {
+            min_distance = distance_between;
+          }
+        });
+        if (feature.properties !== null) {
+          feature.properties.min_distance = min_distance;
+        }
+      } else if (
+        feature.geometry.type === "MultiPolygon" &&
+        feature.properties !== null
+      ) {
+        let min_distance = Number.MAX_VALUE;
+        feature.geometry.coordinates.forEach((points) => {
+          points[0].forEach((position) => {
+            const to = point([position[0], position[1]]);
+            const distance_between = distance(from, to);
+            if (distance_between < min_distance) {
+              min_distance = distance_between;
+            }
+          });
+        });
+        if (feature.properties !== null) {
+          feature.properties.min_distance = min_distance;
+        }
+      } else {
+        console.error("unknown shape");
+      }
+      if (feature.properties !== null) {
+        if (feature.properties.code === centrePostcode) {
+          feature.properties.min_distance = 0;
+        }
+      }
+    });
+    this.setState({ distancesDirty: true });
+  };
+}
+export default App;
