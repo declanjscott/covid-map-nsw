@@ -114,3 +114,7 @@ body {
 .loading-text {
   margin-top: 50px !important;
 }
+
+.github-logo {
+  width: 16px;
+}

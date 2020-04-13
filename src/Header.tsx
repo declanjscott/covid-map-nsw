@@ -11,6 +11,7 @@ import {
   AnchorButton,
   Intent,
 } from "@blueprintjs/core";
+import { ReactComponent as GitHubLogo } from "./assets/github_icon.svg";
 
 import "@blueprintjs/core/lib/css/blueprint.css";
 import { PostcodeDict } from "./App";
@@ -189,7 +190,7 @@ class Header extends React.Component<HeaderProps, HeaderState> {
                   intent={Intent.PRIMARY}
                   href="https://github.com/declanjscott/covid-map-nsw"
                   target="_blank"
-                  icon="git-repo"
+                  icon={<GitHubLogo className="github-logo" />}
                 >
                   View on GitHub
                 </AnchorButton>
