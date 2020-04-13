@@ -1,6 +1,7 @@
 import React from "react";
 import "./App.css";
 import mapboxgl, { Map, Point, GeoJSONSource } from "mapbox-gl";
+import { PostcodeDistanceDict } from "./App";
 
 type MapProps = {
   range: number;
@@ -10,6 +11,7 @@ type MapProps = {
   onMapInitialised: () => void;
   distancesDirty: boolean;
   clearDirty: () => void;
+  postcodeDistanceDict: PostcodeDistanceDict;
   updatePostcode: (newPostCode: string | undefined) => void;
 };
 
@@ -167,7 +169,6 @@ class CaseMap extends React.Component<MapProps, MapState> {
     this.map?.addSource("nsw-data", {
       type: "geojson",
       data: emptyFeatureCollection,
-      generateId: true,
     });
 
     this.map?.addSource("home-loc", {
@@ -182,23 +183,8 @@ class CaseMap extends React.Component<MapProps, MapState> {
       this.updateMetresPerPixel();
       this.updateFilter(this.props.range);
     });
-    this.setupClickableMap();
+    //this.setupClickableMap();
     this.props.onMapInitialised();
-  };
-
-  setupClickableMap = () => {
-    this.map?.on("click", "suburb-backgrounds", (event) => {
-      if (event.features !== undefined && event.features.length > 0) {
-        const feature = event.features[0];
-        if (
-          feature.properties !== null &&
-          feature.properties.code !== undefined
-        ) {
-          const code = feature.properties.code;
-          this.props.updatePostcode(code);
-        }
-      }
-    });
   };
 
   setHomeLocation = () => {
@@ -226,18 +212,15 @@ class CaseMap extends React.Component<MapProps, MapState> {
     const mapSource = this.map?.getSource("nsw-data");
     (mapSource as GeoJSONSource).setData(this.props.mapData!);
     this.setupPopup();
+    this.updateFeatureDistances();
     this.updateFilter(this.props.range);
-    this.props.clearDirty();
   };
 
   componentDidUpdate(prevProps: MapProps, prevState: MapState) {
     if (this.props.range !== prevProps.range) {
       this.updateFilter(this.props.range);
     }
-    if (
-      (this.props.mapDataLoaded && prevProps.mapDataLoaded === false) ||
-      (this.props.distancesDirty === true && prevProps.distancesDirty === false)
-    ) {
+    if (this.props.mapDataLoaded && prevProps.mapDataLoaded === false) {
       if (this.map?.loaded()) {
         this.setMapSourceData();
         this.setHomeLocation();
@@ -248,13 +231,39 @@ class CaseMap extends React.Component<MapProps, MapState> {
         });
       }
     }
+    if (
+      this.props.distancesDirty === true &&
+      prevProps.distancesDirty === false
+    ) {
+      if (this.map?.loaded()) {
+        this.updateFeatureDistances();
+        this.setHomeLocation();
+      } else {
+        this.map?.on("load", () => {
+          this.updateFeatureDistances();
+          this.setHomeLocation();
+        });
+      }
+    }
   }
+
+  updateFeatureDistances = () => {
+    this.props.postcodeDistanceDict.forEach((value, key) => {
+      this.map?.setFeatureState(
+        { id: key, source: "nsw-data" },
+        {
+          min_distance: value,
+        }
+      );
+    });
+    this.props.clearDirty();
+  };
 
   updateFilter = (distance: number) => {
     if (this.map) {
       this.map?.setPaintProperty("suburb-backgrounds", "fill-opacity", [
         "case",
-        ["<=", ["get", "min_distance"], distance],
+        ["<=", ["feature-state", "min_distance"], distance],
         0.2,
         0,
       ]);

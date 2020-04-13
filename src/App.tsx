@@ -23,6 +23,8 @@ export type PostcodeDict = Map<
   { centre: [number, number]; names: string[] }
 >;
 
+export type PostcodeDistanceDict = Map<string, number>;
+
 type AppState = {
   mapData?: GeoJSON.FeatureCollection;
   mapDataLoaded: boolean;
@@ -32,6 +34,7 @@ type AppState = {
   centreCoordinates?: [number, number];
   centrePostCode?: string;
   postcodeDict: PostcodeDict;
+  postcodeDistanceDict: PostcodeDistanceDict;
   distancesDirty: boolean;
 };
 
@@ -49,6 +52,7 @@ class App extends React.Component<AppProps, AppState> {
       range: 1,
       mapInitialised: false,
       postcodeDict: new Map(),
+      postcodeDistanceDict: new Map(),
       distancesDirty: false,
     };
   }
@@ -62,7 +66,10 @@ class App extends React.Component<AppProps, AppState> {
 
         if (decoded.type === "FeatureCollection") {
           this.compute_centres(decoded);
+          console.log("unsetting distances");
+          this.computeUnsetDistances(decoded);
           this.setState({ mapData: decoded, mapDataLoaded: true });
+
           if (
             this.state.centrePostCode &&
             this.state.postcodeDict.has(this.state.centrePostCode)
@@ -73,6 +80,7 @@ class App extends React.Component<AppProps, AppState> {
               this.setState({ centreCoordinates: from });
               this.compute_distances(decoded, from);
             }
+          } else {
           }
         }
       });
@@ -106,13 +114,18 @@ class App extends React.Component<AppProps, AppState> {
             mapDataLoaded={this.state.mapDataLoaded}
             distancesDirty={this.state.distancesDirty}
             updatePostcode={this.updatePostcode}
+            postcodeDistanceDict={this.state.postcodeDistanceDict}
             clearDirty={() => {
               this.setState({ distancesDirty: false });
             }}
           ></CaseMap>
           <Header
             updatePostcode={this.updatePostcode}
-            numCases={this.countCases(this.state.range, this.state.mapData)}
+            numCases={this.countCases(
+              this.state.range,
+              this.state.postcodeDistanceDict,
+              this.state.mapData
+            )}
             range={this.state.range}
             loaded={this.state.mapDataLoaded}
             updateRange={this.handleRangeChange}
@@ -126,32 +139,33 @@ class App extends React.Component<AppProps, AppState> {
 
   updatePostcode = (newPostCode: string | undefined) => {
     this.setState({ centrePostCode: newPostCode });
-    const new_centre =
-      newPostCode === undefined
-        ? ([-25.674502, 128.782607] as [number, number])
-        : this.state.postcodeDict.get(newPostCode)?.centre;
-    const centre_coordinates =
-      newPostCode === undefined ? undefined : new_centre;
 
-    if (
-      this.state.mapData !== undefined &&
-      new_centre !== undefined &&
-      newPostCode !== undefined
-    ) {
-      this.compute_distances(this.state.mapData, new_centre, newPostCode);
+    if (newPostCode === undefined) {
+      this.computeUnsetDistances(this.state.mapData);
+      this.setState({ centreCoordinates: undefined });
+    } else {
+      const new_centre = this.state.postcodeDict.get(newPostCode)?.centre;
+
+      if (this.state.mapData !== undefined && new_centre !== undefined) {
+        this.compute_distances(this.state.mapData, new_centre, newPostCode);
+        this.setState({ centreCoordinates: new_centre });
+      }
     }
-    this.setState({ centreCoordinates: centre_coordinates });
   };
 
-  countCases(range: number, mapData?: GeoJSON.FeatureCollection): number {
+  countCases(
+    range: number,
+    distances: PostcodeDistanceDict,
+    mapData?: GeoJSON.FeatureCollection
+  ): number {
     if (mapData === undefined) {
       return -1;
     }
     let count = 0;
     mapData.features.forEach((feature) => {
       if (feature.properties != null) {
-        const distance = feature.properties.min_distance;
-        if (distance <= range) {
+        const distance = distances.get(feature.id as string);
+        if (distance !== undefined && distance <= range) {
           count += feature.properties.cases;
         }
       }
@@ -162,7 +176,6 @@ class App extends React.Component<AppProps, AppState> {
   compute_centres = (mapData: GeoJSON.FeatureCollection) => {
     mapData.features.forEach((feature) => {
       if (feature.properties !== null) {
-        feature.properties.min_distance = 2000;
         const names: string[] = feature.properties.names;
         const num_suburbs_to_show = 4;
         if (names.length <= num_suburbs_to_show) {
@@ -196,7 +209,7 @@ class App extends React.Component<AppProps, AppState> {
         console.error("unknown shape");
       }
       if (feature.properties !== null) {
-        const postcode = feature.properties.code;
+        const postcode = feature.id as string;
         const centre: [number, number] = [
           feature.properties.centre_lng,
           feature.properties.centre_lat,
@@ -210,11 +223,25 @@ class App extends React.Component<AppProps, AppState> {
     });
   };
 
+  computeUnsetDistances = (mapData?: GeoJSON.FeatureCollection) => {
+    if (mapData === undefined) {
+      return;
+    }
+    mapData.features.forEach((feature) => {
+      if (feature.properties !== null) {
+        const code = feature.id as string;
+        this.state.postcodeDistanceDict.set(code, 2000);
+      }
+    });
+    this.setState({ distancesDirty: true });
+  };
+
   compute_distances = (
     mapData: GeoJSON.FeatureCollection,
     fromCoords: [number, number],
     centrePostcode?: string
   ) => {
+    console.log("recomputing distances");
     const from = point(fromCoords);
     mapData.features.forEach((feature) => {
       if (feature.geometry.type === "Polygon" && feature.properties !== null) {
@@ -227,9 +254,8 @@ class App extends React.Component<AppProps, AppState> {
             min_distance = distance_between;
           }
         });
-        if (feature.properties !== null) {
-          feature.properties.min_distance = min_distance;
-        }
+        const code = feature.id as string;
+        this.state.postcodeDistanceDict.set(code, min_distance);
       } else if (
         feature.geometry.type === "MultiPolygon" &&
         feature.properties !== null
@@ -244,15 +270,14 @@ class App extends React.Component<AppProps, AppState> {
             }
           });
         });
-        if (feature.properties !== null) {
-          feature.properties.min_distance = min_distance;
-        }
+        const code = feature.id as string;
+        this.state.postcodeDistanceDict.set(code, min_distance);
       } else {
         console.error("unknown shape");
       }
       if (feature.properties !== null) {
-        if (feature.properties.code === centrePostcode) {
-          feature.properties.min_distance = 0;
+        if (centrePostcode !== undefined && feature.id === centrePostcode) {
+          this.state.postcodeDistanceDict.set(centrePostcode, 0);
         }
       }
     });
