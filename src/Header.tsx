@@ -113,7 +113,6 @@ class Header extends React.Component<HeaderProps, HeaderState> {
   };
 
   updatePostcodeInternal = (newPostcode: string) => {
-    console.log("update");
     this.setState({ postcode: newPostcode });
   };
 

@@ -69,7 +69,6 @@ class App extends React.Component<AppProps, AppState> {
 
         if (decoded.type === "FeatureCollection") {
           this.compute_centres(decoded);
-          console.log("unsetting distances");
           this.computeUnsetDistances(decoded);
           this.setState({ mapData: decoded, mapDataLoaded: true });
 
@@ -248,7 +247,6 @@ class App extends React.Component<AppProps, AppState> {
     fromCoords: [number, number],
     centrePostcode?: string
   ) => {
-    console.log("recomputing distances");
     const from = point(fromCoords);
     mapData.features.forEach((feature) => {
       if (feature.geometry.type === "Polygon" && feature.properties !== null) {
