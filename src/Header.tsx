@@ -133,8 +133,14 @@ class Header extends React.Component<HeaderProps, HeaderState> {
               }
               placeholder="Postcode"
               value={this.state.postcode}
+              onKeyPress={() => {
+                if (this.postCodeIsSubmittable()) {
+                  this.props.updatePostcode(this.state.postcode);
+                }
+              }}
             />
             <Button
+              className="submit-button"
               disabled={!this.postCodeIsSubmittable()}
               onClick={(e: any) =>
                 this.props.updatePostcode(this.state.postcode)
