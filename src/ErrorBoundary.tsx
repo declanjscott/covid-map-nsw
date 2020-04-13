@@ -21,8 +21,7 @@ class ErrorBoundary extends React.Component<ErrorProps, ErrorState> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    // You can also log the error to an error reporting service
-    //logErrorToMyService(error, errorInfo);
+    (window as any).heap.track("Error", { error, info });
   }
 
   render() {
