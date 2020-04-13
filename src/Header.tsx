@@ -156,7 +156,11 @@ class Header extends React.Component<HeaderProps, HeaderState> {
             : this.getRangeSlider()}
         </div>
         <div className="header-buttons">
-          <Button onClick={this.toggleOverlay} icon="info-sign">
+          <Button
+            className={"flat-button"}
+            onClick={this.toggleOverlay}
+            icon="info-sign"
+          >
             About this app
           </Button>
           <Dialog

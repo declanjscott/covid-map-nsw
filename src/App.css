@@ -12,18 +12,14 @@ body {
   width: 100%;
   padding: 24px;
   display: flex;
+  flex-wrap: wrap;
 }
 .header-buttons {
   display: flex;
-  flex-direction: column;
-  margin-left: 10px;
   align-items: flex-start;
+  flex-wrap: wrap;
+  flex-direction: column;
 }
-
-.delete-button {
-  margin-top: 10px;
-}
-
 .header-box {
   background-color: #293742;
   border-radius: 3px;
@@ -32,6 +28,27 @@ body {
   width: 100%;
   padding: 16px 24px;
   max-width: 700px;
+  margin-right: 10px;
+}
+
+.delete-button {
+  margin-top: 10px;
+}
+
+@media (max-width: 900px) {
+  .header-buttons {
+    flex-direction: row;
+  }
+
+  .header-box {
+    margin-right: 0px;
+    margin-bottom: 10px;
+  }
+
+  .delete-button {
+    margin-top: 0px;
+    margin-left: 10px;
+  }
 }
 
 .header-slider-content {
@@ -80,4 +97,8 @@ body {
 
 .hidden {
   opacity: 0;
+}
+
+.flat-button {
+  background-color: #293742 !important;
 }
