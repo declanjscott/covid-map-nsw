@@ -57,20 +57,26 @@ class CaseMap extends React.Component<MapProps, MapState> {
       className: "tooltip",
       closeButton: false,
       maxWidth: "none",
+      closeOnClick: false,
     });
+    var id: string | undefined = undefined;
 
     if (this.map) {
       const map = this.map;
-      map.on("mousemove", function (e) {
+      map.on("click", function (e) {
         var features = map.queryRenderedFeatures(e.point, {
           layers: ["suburb-backgrounds"],
         });
-        if (!features.length) {
+        var feature = features[0];
+        var newId = feature === undefined ? undefined : (feature.id as string);
+        if ((id === newId && popup.isOpen()) || newId === undefined) {
+          id = newId;
           popup.remove();
           return;
         }
-        var feature = features[0];
+        id = newId;
         let prop = feature.properties;
+
         if (
           prop != null &&
           prop.cases != null &&
@@ -85,7 +91,6 @@ class CaseMap extends React.Component<MapProps, MapState> {
             <div class=tooltip-content><strong>${prop.names_string}</strong>: ${prop.cases} cases</div>
           `;
           popup.setLngLat(latlong).setHTML(html).addTo(map);
-          map.getCanvas().style.cursor = features.length ? "pointer" : "";
         }
       });
     }
