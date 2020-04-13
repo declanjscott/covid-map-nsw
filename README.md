@@ -1,5 +1,5 @@
 # NSW COVID-19 Map
-[![Netlify Status](https://api.netlify.com/api/v1/badges/5d5d3a59-d0b3-4d7c-9b3b-2f62d382eed4/deploy-status)](https://app.netlify.com/sites/covid-map-nsw/deploys)
+![Netlify Status](https://api.netlify.com/api/v1/badges/5d5d3a59-d0b3-4d7c-9b3b-2f62d382eed4/deploy-status)](https://app.netlify.com/sites/covid-map-nsw/deploys)
 
 [![App screenshot](demo/demo_screenshot.png)
 
