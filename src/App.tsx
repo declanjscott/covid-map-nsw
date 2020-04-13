@@ -58,7 +58,10 @@ class App extends React.Component<AppProps, AppState> {
   }
 
   componentDidMount() {
-    let url = process.env.PUBLIC_URL + "/covid_nsw.pbf";
+    let url = process.env.REACT_APP_DATA_URL;
+    if (url === undefined) {
+      throw new Error("data source URL not defined");
+    }
     fetch(url)
       .then((response) => response.arrayBuffer())
       .then((result) => {
@@ -80,9 +83,13 @@ class App extends React.Component<AppProps, AppState> {
               this.setState({ centreCoordinates: from });
               this.compute_distances(decoded, from);
             }
-          } else {
           }
         }
+      })
+      .catch((e) => {
+        this.setState(() => {
+          throw new Error("Network error");
+        });
       });
   }
 
