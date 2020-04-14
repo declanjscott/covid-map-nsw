@@ -206,11 +206,9 @@ class App extends React.Component<AppProps, AppState> {
         feature.geometry.type === "MultiPolygon" &&
         feature.properties !== null
       ) {
-        if (feature.properties !== null) {
-          const centre = centroid(feature.geometry).geometry.coordinates;
-          feature.properties.centre_lng = centre[0];
-          feature.properties.centre_lat = centre[1];
-        }
+        const centre = centroid(feature.geometry).geometry.coordinates;
+        feature.properties.centre_lng = centre[0];
+        feature.properties.centre_lat = centre[1];
       } else {
         console.error("unknown shape");
       }

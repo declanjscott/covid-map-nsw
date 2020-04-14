@@ -215,10 +215,12 @@ class CaseMap extends React.Component<MapProps, MapState> {
 
   setMapSourceData = () => {
     const mapSource = this.map?.getSource("nsw-data");
-    (mapSource as GeoJSONSource).setData(this.props.mapData!);
-    this.setupPopup();
-    this.updateFeatureDistances();
-    this.updateFilter(this.props.range);
+    if ((mapSource as GeoJSONSource).setData) {
+      (mapSource as GeoJSONSource).setData(this.props.mapData!);
+      this.setupPopup();
+      this.updateFeatureDistances();
+      this.updateFilter(this.props.range);
+    }
   };
 
   componentDidUpdate(prevProps: MapProps, prevState: MapState) {
@@ -266,7 +268,7 @@ class CaseMap extends React.Component<MapProps, MapState> {
 
   updateFilter = (distance: number) => {
     if (this.map) {
-      this.map?.setPaintProperty("suburb-backgrounds", "fill-opacity", [
+      this.map.setPaintProperty("suburb-backgrounds", "fill-opacity", [
         "case",
         ["<=", ["feature-state", "min_distance"], distance],
         0.2,
