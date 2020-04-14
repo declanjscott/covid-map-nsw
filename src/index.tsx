@@ -6,17 +6,19 @@ import App from "./App";
 import * as serviceWorker from "./serviceWorker";
 import ErrorBoundary from "./ErrorBoundary";
 
-if (
-  process.env.NODE_ENV === "production" &&
-  process.env.REACT_APP_SENTRY_RELEASE &&
-  process.env.REACT_APP_SENTRY_DSN
-) {
-  Sentry.init({
-    dsn: process.env.REACT_APP_SENTRY_DSN,
-    release: process.env.REACT_APP_SENTRY_RELEASE,
-    environment: process.env.NODE_ENV,
-  });
-}
+console.log(process.env.NODE_ENV);
+console.log(process.env.REACT_APP_SENTRY_RELEASE);
+console.log(process.env.REACT_APP_SENTRY_DSN);
+
+Sentry.init({
+  dsn: process.env.REACT_APP_SENTRY_DSN,
+  release: process.env.REACT_APP_SENTRY_RELEASE,
+  environment: process.env.NODE_ENV,
+});
+
+Sentry.captureEvent({
+  message: "custom event",
+});
 
 ReactDOM.render(
   <React.StrictMode>
