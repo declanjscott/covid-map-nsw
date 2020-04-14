@@ -1,5 +1,6 @@
 # NSW COVID-19 Map
 [![Netlify Status](https://api.netlify.com/api/v1/badges/5d5d3a59-d0b3-4d7c-9b3b-2f62d382eed4/deploy-status)](https://app.netlify.com/sites/covid-map-nsw/deploys)
+[![DeepScan grade](https://deepscan.io/api/teams/8615/projects/10827/branches/154719/badge/grade.svg)](https://deepscan.io/dashboard#view=project&tid=8615&pid=10827&bid=154719)
 
 ![App screenshot](demo/demo_screenshot.png)
 
