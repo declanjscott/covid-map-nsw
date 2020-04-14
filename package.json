@@ -6,7 +6,7 @@
     "@blueprintjs/core": "^3.24.0",
     "@sentry/browser": "^5.15.4",
     "@testing-library/jest-dom": "^4.2.4",
-    "@testing-library/react": "^9.3.2",
+    "@testing-library/react": "^10.0.2",
     "@testing-library/user-event": "^7.1.2",
     "@turf/center-of-mass": "6.2.0-alpha.1",
     "@turf/centroid": "6.2.0-alpha.1",
