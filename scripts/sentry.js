@@ -1,3 +1,5 @@
+//This script uploads source maps to Sentry
+
 const SentryCli = require("@sentry/cli");
 
 async function createReleaseAndUpload() {
