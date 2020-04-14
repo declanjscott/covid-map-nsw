@@ -13,7 +13,7 @@
     "@turf/distance": "6.2.0-alpha.1",
     "@types/geobuf": "^3.0.0",
     "@types/jest": "^24.0.0",
-    "@types/mapbox-gl": "^1.8.3",
+    "@types/mapbox-gl": "^1.9.0",
     "@types/node": "^13.11.1",
     "@types/react": "^16.9.0",
     "@types/react-dom": "^16.9.0",
