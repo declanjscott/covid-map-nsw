@@ -1,4 +1,5 @@
 import React, { ErrorInfo } from "react";
+import * as Sentry from "@sentry/browser";
 import "./App.css";
 
 import "@blueprintjs/core/lib/css/blueprint.css";
@@ -21,7 +22,7 @@ class ErrorBoundary extends React.Component<ErrorProps, ErrorState> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    (window as any).heap.track("Error", { error, info });
+    Sentry.captureException(error);
   }
 
   render() {
