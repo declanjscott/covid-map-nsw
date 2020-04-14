@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@blueprintjs/core": "^3.24.0",
+    "@blueprintjs/core": "^3.25.0",
+    "@sentry/browser": "^5.15.4",
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.3.2",
     "@testing-library/user-event": "^7.1.2",
@@ -13,7 +14,7 @@
     "@types/geobuf": "^3.0.0",
     "@types/jest": "^24.0.0",
     "@types/mapbox-gl": "^1.8.3",
-    "@types/node": "^12.0.0",
+    "@types/node": "^13.11.1",
     "@types/react": "^16.9.0",
     "@types/react-dom": "^16.9.0",
     "@types/react-map-gl": "^5.2.2",
@@ -30,7 +31,8 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "release": "(export REACT_APP_SENTRY_RELEASE=$(git rev-parse --short HEAD); react-scripts build && node scripts/sentry.js)"
   },
   "eslintConfig": {
     "extends": "react-app"
@@ -46,5 +48,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@sentry/cli": "^1.52.1"
   }
 }
