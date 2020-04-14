@@ -215,7 +215,7 @@ class CaseMap extends React.Component<MapProps, MapState> {
 
   setMapSourceData = () => {
     const mapSource = this.map?.getSource("nsw-data");
-    if ((mapSource as GeoJSONSource).setData) {
+    if (mapSource !== undefined && (mapSource as GeoJSONSource).setData) {
       (mapSource as GeoJSONSource).setData(this.props.mapData!);
       this.setupPopup();
       this.updateFeatureDistances();
