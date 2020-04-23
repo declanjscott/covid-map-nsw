@@ -50,6 +50,6 @@
     ]
   },
   "devDependencies": {
-    "@sentry/cli": "^1.52.1"
+    "@sentry/cli": "^1.52.3"
   }
 }
